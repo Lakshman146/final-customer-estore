@@ -1,14 +1,17 @@
-package test;
+package Test;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.testng.Assert;
 import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import eStoreProduct.DAO.OrderDAOView;
+import eStoreProduct.model.Invoice;
 import eStoreProduct.model.OrdersViewModel;
 import eStoreProduct.model.custCredModel;
 import eStoreProduct.controller.*;
@@ -23,6 +26,8 @@ public class CustomerOrderControllerTest {
 
   @Mock
   private OrderDAOView orderDAOView;
+  @Mock
+  private Invoice invoice;
 
   @Mock
   private HttpSession httpSession;
@@ -66,14 +71,14 @@ public class CustomerOrderControllerTest {
     OrdersViewModel product = new OrdersViewModel(productId, "earphones", 1000, "these are earphones", "www.earphones.com", 2134, "order_placed");
 
     when(httpSession.getAttribute("customer")).thenReturn(cust);
-    when(orderDAOView.OrdProductById(cust.getCustId(), productId)).thenReturn(product);
+    when(orderDAOView.OrdProductById(cust.getCustId(), productId, productId)).thenReturn(product);
 
     // Test the method
-    String result = customerOrderController.getProductDetails(productId, model, httpSession);
+    String result = customerOrderController.getProductDetails(productId, productId, model, httpSession);
 
     // Verify the result
     verify(httpSession).getAttribute("customer");
-    verify(orderDAOView).OrdProductById(cust.getCustId(), productId);
+    verify(orderDAOView).OrdProductById(cust.getCustId(), productId, productId);
     verify(model).addAttribute(eq("product"), any());
     // Assert other expectations or behavior based on the expected result
     AssertJUnit.assertEquals("OrdProDetails", result);
@@ -119,7 +124,34 @@ public class CustomerOrderControllerTest {
     AssertJUnit.assertEquals(shipmentStatus, result);
 
   }
+  
+  @Test
+  public void testViewInvoice() {
+    
+
+      // Mock the request parameters
+      int orderId = 123;
+      int productId = 456;
+      
+      // Create a mock Invoice object
+      Invoice mockInvoice = new Invoice();
+    
+      when(orderDAOView.getInvoiceByOrderId(orderId, productId)).thenReturn(mockInvoice);
+
+      // Create a mock Model object
+      Model model = mock(Model.class);
+      
+      // Call the method
+      ResponseEntity<String> response = customerOrderController.viewInvoice(orderId, productId, model);
+      
+      // Verify that the necessary methods were called
+      verify(orderDAOView).getInvoiceByOrderId(orderId, productId);
+      verify(model).addAttribute("invoice", mockInvoice);
+
+      // Verify the returned response
+      AssertJUnit.assertEquals(HttpStatus.OK, response.getStatusCode());
+      AssertJUnit.assertEquals(mockInvoice.toString(), response.getBody());
+  }
 
   
 }
-
